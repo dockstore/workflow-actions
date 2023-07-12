@@ -1,0 +1,19 @@
+name: Check License
+description: Checks that the committed third party licenses file is up to date
+
+inputs:
+  licensefile:
+    description: 'A relative path from the repository root to the 3rd party license file'
+    default: 'THIRD-PARTY-LICENSES.txt'
+    required: false
+
+
+runs:
+  using: composite
+  steps:
+    - id: check
+      shell: bash
+      run: |
+        cp ${{ inputs.licensefile }} ${{ inputs.licensefile }}.orig
+        git checkout ${{ inputs.licensefile }}
+        diff ${{ inputs.licensefile }}.orig ${{ inputs.licensefile }}
