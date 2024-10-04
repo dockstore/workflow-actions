@@ -27,7 +27,8 @@ jobs:
 
     # Should only release tags
     # TODO: should only release tags where the required status checks are passing
-    if: startsWith(github.ref, 'refs/tags/')
+    # UNCOMMENT THIS FOR PR REVIEW!
+    # if: startsWith(github.ref, 'refs/tags/')
 
     permissions:
       id-token: write
