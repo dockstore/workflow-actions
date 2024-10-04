@@ -8,7 +8,7 @@ on:
         required: true
         default: '.0-alpha.1'
       dockerize:
-        description: 'Whether to dockerize'
+        description: 'Whether to dockerize, caller must have Dockerfile in root of repo'
         required: false
         type: boolean
         default: false
@@ -24,7 +24,7 @@ on:
         type: string
         default: '.0-alpha.1'  
       dockerize:
-        description: 'Whether to dockerize'
+        description: 'Whether to dockerize, caller must have Dockerfile in root of repo'
         required: false
         type: boolean
         default: false
