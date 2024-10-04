@@ -22,6 +22,7 @@ on:
       dockerTagPrefix:
         description: 'Prefix for Docker tag, required if dockerize is true'
         required: false
+        type: string
 
 
 jobs:
@@ -84,7 +85,7 @@ jobs:
 
       - name: Set Docker tag name
         if: ${{ inputs.dockerize  && inputs.dockerTagPrefix != ''}}
-        run: 
+        run: |
           DOCKER_TAG=${GITHUB_REF##refs/tags/}
           if [ $GITHUB_REF == $DOCKER_TAG ]; then
             # If this isn't a tag, it must be a branch
