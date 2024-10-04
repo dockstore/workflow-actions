@@ -91,7 +91,7 @@ jobs:
             # If this isn't a tag, it must be a branch
             DOCKER_TAG=${GITHUB_REF##refs/heads/}
           fi
-          echo "DOCKER_TAG=${{dockerTagPrefix}}:${DOCKER_TAG//\//_}" >> $GITHUB_ENV
+          echo "DOCKER_TAG=${{ inputs.dockerTagPrefix }}:${DOCKER_TAG//\//_}" >> $GITHUB_ENV
 
       - name: Dockerize
         if: ${{ inputs.dockerize  && inputs.dockerTagPrefix != ''}}
