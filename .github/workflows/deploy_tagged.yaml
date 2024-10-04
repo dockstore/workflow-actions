@@ -14,6 +14,11 @@ on:
         required: true
         type: string
         default: '.0-alpha.1'  
+      dockerize:
+        description: 'Whether to dockerize'
+        required: false
+        type: boolean
+        default: false
 
 
 jobs:
@@ -60,6 +65,15 @@ jobs:
         run: |
          git config --global user.email "${{ github.actor }}"
          git config --global user.name "${{ github.actor }}"
-         ./mvnw --batch-mode deploy -ntp -s .github/collab-mvn-settings.xml -DskipTests -Dchangelist=${{ github.event.inputs.changelist }}
+         # Do not submit this for a PR
+         ./mvnw --batch-mode clean install -ntp -s .github/collab-mvn-settings.xml -DskipTests -Dchangelist=${{ github.event.inputs.changelist }}
         env: 
           COLLAB_DEPLOY_TOKEN: ${{ secrets.COLLAB_DEPLOY_TOKEN }}
+
+      - name: Dockerize
+        if: ${{ inputs.dockerize }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          # tags: quay.io/dockstore/dockstore-support:${{env.S3_FOLDER}}
