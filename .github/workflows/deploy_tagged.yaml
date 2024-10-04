@@ -7,6 +7,15 @@ on:
         description: 'patch and pre-release metadata'
         required: true
         default: '.0-alpha.1'
+      dockerize:
+        description: 'Whether to dockerize'
+        required: false
+        type: boolean
+        default: false
+      dockerTagPrefix:
+        description: 'Prefix for Docker tag, required if dockerize is true'
+        required: false
+        type: string
   workflow_call:
     inputs:
       changelist:
@@ -31,8 +40,7 @@ jobs:
 
     # Should only release tags
     # TODO: should only release tags where the required status checks are passing
-    # UNCOMMENT THIS FOR PR REVIEW!
-    # if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/')
 
     permissions:
       id-token: write
@@ -88,6 +96,7 @@ jobs:
         run: |
           DOCKER_TAG=${GITHUB_REF##refs/tags/}
           if [ $GITHUB_REF == $DOCKER_TAG ]; then
+            # Should never get here because of line 34, but leaving this just in case
             # If this isn't a tag, it must be a branch
             DOCKER_TAG=${GITHUB_REF##refs/heads/}
           fi
