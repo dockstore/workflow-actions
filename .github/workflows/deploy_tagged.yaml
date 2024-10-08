@@ -7,13 +7,13 @@ on:
         description: 'patch and pre-release metadata'
         required: true
         default: '.0-alpha.1'
-      dockerize:
-        description: 'Whether to dockerize, caller must have Dockerfile in root of repo'
+      createDockerImage:
+        description: 'Whether to create a Docker image, caller must have Dockerfile in root of repo'
         required: false
         type: boolean
         default: false
       dockerTagPrefix:
-        description: 'Prefix for Docker tag, required if dockerize is true'
+        description: 'Prefix for Docker tag, required if createDockerImage is true'
         required: false
         type: string
   workflow_call:
@@ -23,13 +23,13 @@ on:
         required: true
         type: string
         default: '.0-alpha.1'  
-      dockerize:
-        description: 'Whether to dockerize, caller must have Dockerfile in root of repo'
+      createDockerImage:
+        description: 'Whether to create a Docker image, caller must have Dockerfile in root of repo'
         required: false
         type: boolean
         default: false
       dockerTagPrefix:
-        description: 'Prefix for Docker tag, required if dockerize is true'
+        description: 'Prefix for Docker tag, required if createDockerImage is true'
         required: false
         type: string
 
@@ -83,7 +83,7 @@ jobs:
           COLLAB_DEPLOY_TOKEN: ${{ secrets.COLLAB_DEPLOY_TOKEN }}
 
       - name: Login to Quay.io
-        if: ${{ inputs.dockerize  && inputs.dockerTagPrefix != ''}}
+        if: ${{ inputs.createDockerImage  && inputs.dockerTagPrefix != ''}}
         uses: docker/login-action@v3
         with:
           registry: quay.io
@@ -91,7 +91,7 @@ jobs:
           password: ${{ secrets.QUAY_TOKEN }}
 
       - name: Set Docker tag name
-        if: ${{ inputs.dockerize  && inputs.dockerTagPrefix != ''}}
+        if: ${{ inputs.createDockerImage && inputs.dockerTagPrefix != ''}}
         run: |
           DOCKER_TAG=${GITHUB_REF##refs/tags/}
           if [ $GITHUB_REF == $DOCKER_TAG ]; then
@@ -101,8 +101,8 @@ jobs:
           fi
           echo "DOCKER_TAG=${{ inputs.dockerTagPrefix }}:${DOCKER_TAG//\//_}" >> $GITHUB_ENV
 
-      - name: Dockerize
-        if: ${{ inputs.dockerize  && inputs.dockerTagPrefix != ''}}
+      - name: Create and push Docker image
+        if: ${{ inputs.createDockerImage  && inputs.dockerTagPrefix != ''}}
         uses: docker/build-push-action@v6
         with:
           context: .
