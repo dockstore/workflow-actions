@@ -7,6 +7,15 @@ on:
         description: 'patch and pre-release metadata'
         required: true
         default: '.0-alpha.1'
+      createDockerImage:
+        description: 'Whether to create a Docker image, caller must have Dockerfile in root of repo'
+        required: false
+        type: boolean
+        default: false
+      dockerTagPrefix:
+        description: 'Prefix for Docker tag, required if createDockerImage is true'
+        required: false
+        type: string
   workflow_call:
     inputs:
       changelist:
@@ -14,6 +23,15 @@ on:
         required: true
         type: string
         default: '.0-alpha.1'  
+      createDockerImage:
+        description: 'Whether to create a Docker image, caller must have Dockerfile in root of repo'
+        required: false
+        type: boolean
+        default: false
+      dockerTagPrefix:
+        description: 'Prefix for Docker tag, required if createDockerImage is true'
+        required: false
+        type: string
 
 
 jobs:
@@ -63,3 +81,30 @@ jobs:
          ./mvnw --batch-mode deploy -ntp -s .github/collab-mvn-settings.xml -DskipTests -Dchangelist=${{ github.event.inputs.changelist }}
         env: 
           COLLAB_DEPLOY_TOKEN: ${{ secrets.COLLAB_DEPLOY_TOKEN }}
+
+      - name: Login to Quay.io
+        if: ${{ inputs.createDockerImage  && inputs.dockerTagPrefix != ''}}
+        uses: docker/login-action@v3
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USER }}
+          password: ${{ secrets.QUAY_TOKEN }}
+
+      - name: Set Docker tag name
+        if: ${{ inputs.createDockerImage && inputs.dockerTagPrefix != ''}}
+        run: |
+          DOCKER_TAG=${GITHUB_REF##refs/tags/}
+          if [ $GITHUB_REF == $DOCKER_TAG ]; then
+            # Should never get here because of line 34, but leaving this just in case
+            # If this isn't a tag, it must be a branch
+            DOCKER_TAG=${GITHUB_REF##refs/heads/}
+          fi
+          echo "DOCKER_TAG=${{ inputs.dockerTagPrefix }}:${DOCKER_TAG//\//_}" >> $GITHUB_ENV
+
+      - name: Create and push Docker image
+        if: ${{ inputs.createDockerImage  && inputs.dockerTagPrefix != ''}}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ env.DOCKER_TAG }}
