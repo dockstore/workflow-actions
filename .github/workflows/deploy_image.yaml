@@ -1,0 +1,70 @@
+name: Reusable Image Deploy
+
+on:
+  workflow_call:
+    inputs:
+      quayRepository:
+        description: The quay repository to upload the image to. The repository must belong to the dockstore quay organization.
+        required: true
+        type: string
+      dockerContext:
+        description: The Docker context containing the Docker file of the image to build and push.
+        required: true
+        default: .
+        type: string
+
+env:
+  DOCKER_IMAGE_NAME: quay.io/dockstore/${{ inputs.quayRepository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    permissions:
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: docker_checksum_upload_from_github
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Quay.io
+        uses: docker/login-action@v3
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USER }}
+          password: ${{ secrets.QUAY_TOKEN }}
+
+      - name: Set folder name
+        run: |
+          S3_FOLDER=${GITHUB_REF##refs/tags/}
+          if [ $GITHUB_REF == $S3_FOLDER ]; then
+            # If this isn't a tag, it must be a branch
+            S3_FOLDER=${GITHUB_REF##refs/heads/}
+          fi
+          echo "S3_FOLDER=${S3_FOLDER//\//_}" >> $GITHUB_ENV
+
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ inputs.dockerContext }}
+          push: true
+          tags: '${{ env.DOCKER_IMAGE_NAME }}:${{ env.S3_FOLDER }}'
+
+      - name: Create checksums
+        run: |
+          docker inspect ${{ env.DOCKER_IMAGE_NAME }}:${{ env.S3_FOLDER }} | grep -A 1 RepoDigests
+          docker inspect ${{ env.DOCKER_IMAGE_NAME }}:${{ env.S3_FOLDER }} | grep -A 1 RepoDigests | grep -oPm1 'sha256:\K\w+' > image-digest.txt        
+
+      - name: Get short SHA
+        id: slug
+        run: echo "::set-output name=sha7::$(echo ${GITHUB_SHA} | cut -c1-7)"
+
+      - name: Copy checksum files
+        run: aws s3 cp image-digest.txt  s3://${{ secrets.AWS_BUCKET }}/${{ env.S3_FOLDER }}-${{ steps.slug.outputs.sha7 }}/image-digest.txt
