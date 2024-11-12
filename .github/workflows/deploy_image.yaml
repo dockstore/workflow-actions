@@ -9,7 +9,7 @@ on:
         type: string
       dockerContext:
         description: The Docker context containing the Docker file of the image to build and push.
-        required: true
+        required: false
         default: .
         type: string
 
