@@ -84,4 +84,4 @@ jobs:
         run: echo "::set-output name=sha7::$(echo ${GITHUB_SHA} | cut -c1-7)"
 
       - name: Copy checksum files
-        run: aws s3 cp image-digest.txt  s3://${{ secrets.AWS_BUCKET }}/${{ env.S3_FOLDER }}-${{ steps.slug.outputs.sha7 }}/image-digest.txt
+        run: aws s3 cp image-digest.txt  s3://${{ secrets.AWS_BUCKET }}/${{ env.S3_FOLDER }}-${{ steps.slug.outputs.sha7 }}/${{ inputs.quayRepository }}/image-digest.txt
