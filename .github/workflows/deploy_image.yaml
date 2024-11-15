@@ -25,8 +25,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       # Step that does that actual cache save and restore
       - uses: actions/cache@v4
