@@ -42,7 +42,6 @@ jobs:
 
       - name: Set changelist
         run: |
-          set -x
           CHANGELIST_VERSION=${{ inputs.changelist }}
           if [ -z ${CHANGELIST_VERSION} ]; then
             # Break up the semantic version tag by the '.' delimiter and return the third field onward. Prefix this with the '.'
@@ -50,7 +49,6 @@ jobs:
             CHANGELIST_VERSION=.$(echo ${{ github.ref_name }} | cut -d. -f 3-)
           fi
           echo "CHANGELIST_VERSION=${CHANGELIST_VERSION}" >> $GITHUB_ENV
-          echo ${{ env.CHANGELIST_VERSION }}
 
       - name: Store Maven project version 
         run: echo "maven_project_version=$(mvn help:evaluate -Dexpression=project.version -Dchangelist=${{ env.CHANGELIST_VERSION }} -q -DforceStdout)" >> $GITHUB_ENV
