@@ -49,8 +49,8 @@ jobs:
             # Ex: 1.16.0 -> .0 and 1.16.0-alpha.0 -> .0-alpha.0
             CHANGELIST_VERSION=.$(echo ${{ github.ref_name }} | cut -d. -f 3-)
           fi
-          echo "CHANGELIST_VERSION" >> $GITHUB_ENV
-          echo "${{ env.CHANGELIST_VERSION }}"
+          echo "CHANGELIST_VERSION=${CHANGELIST_VERSION}" >> $GITHUB_ENV
+          echo ${{ env.CHANGELIST_VERSION }}
 
       - name: Store Maven project version 
         run: echo "maven_project_version=$(mvn help:evaluate -Dexpression=project.version -Dchangelist=${{ env.CHANGELIST_VERSION }} -q -DforceStdout)" >> $GITHUB_ENV
