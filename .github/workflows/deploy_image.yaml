@@ -60,11 +60,7 @@ jobs:
 
       - name: Set folder name
         run: |
-          S3_FOLDER=${GITHUB_REF##refs/tags/}
-          if [ $GITHUB_REF == $S3_FOLDER ]; then
-            # If this isn't a tag, it must be a branch
-            S3_FOLDER=${GITHUB_REF##refs/heads/}
-          fi
+          S3_FOLDER=${{ github.ref_name }}
           echo "S3_FOLDER=${S3_FOLDER//\//_}" >> $GITHUB_ENV
 
       - name: Build and push
