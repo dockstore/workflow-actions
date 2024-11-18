@@ -42,8 +42,9 @@ jobs:
 
       - name: Set changelist
         run: |
+          set -x
           CHANGELIST_VERSION=${{ inputs.changelist }}
-          if [ -z ${{ inputs.changelist }} ]; then
+          if [ -z ${CHANGELIST_VERSION} ]; then
             # Break up the semantic version tag by the '.' delimiter and return the third field onward. Prefix this with the '.'
             # Ex: 1.16.0 -> .0 and 1.16.0-alpha.0 -> .0-alpha.0
             CHANGELIST_VERSION=.$(echo ${{ github.ref_name }} | cut -d. -f 3-)
