@@ -41,13 +41,17 @@ jobs:
           java-version: '21.0.2+13.0.LTS'
           distribution: 'adopt'
 
-      - name: Set changelist
+      - name: Set changelist version
         run: |
           CHANGELIST_VERSION=${{ inputs.changelist }}
           if [ -z ${CHANGELIST_VERSION} ]; then
             # Break up the semantic version tag by the '.' delimiter and return the third field onward. Prefix this with the '.'
             # Ex: 1.16.0 -> .0 and 1.16.0-alpha.0 -> .0-alpha.0
-            CHANGELIST_VERSION=.$(echo ${{ github.ref_name }} | cut -d. -f 3-)
+            CHANGELIST_VERSION=$(echo ${{ github.ref_name }} | cut -d. -f 3-)
+            if [ -z $CHANGELIST_VERSION ]; then
+              exit 1
+            fi
+            CHANGELIST_VERSION=.$CHANGELIST
           fi
           echo "CHANGELIST_VERSION=${CHANGELIST_VERSION}" >> $GITHUB_ENV
 

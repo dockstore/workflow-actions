@@ -1,0 +1,39 @@
+name: Deploy snapshot
+
+on:
+  workflow_call:
+  
+jobs:
+  build:
+    # Should only deploy snapshots for branches
+    if: github.ref_type == 'branch'
+
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+      # Step that does that actual cache save and restore
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+           ${{ runner.os }}-maven-
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21.0.2+13.0.LTS'
+          distribution: 'adopt'
+
+      - name: Deploy with mvnw
+        run: |
+          if [ ${{ github.ref_name }} == develop ]; then
+            ./mvnw --batch-mode deploy -ntp -s .github/snapshot-mvn-settings.xml -DskipTests
+          else
+            CHANGELIST_VERSION=.0-${{ github.ref_name }}-SNAPSHOT
+            CHANGELIST_VERSION=${CHANGELIST_VERSION//\//_}
+            ./mvnw --batch-mode deploy -ntp -s .github/snapshot-mvn-settings.xml -DskipTests -Dchangelist=$CHANGELIST_VERSION
+          fi
+        env: 
+          SNAPSHOT_DEPLOY_TOKEN: ${{ secrets.SNAPSHOT_DEPLOY_TOKEN }}
