@@ -40,6 +40,10 @@ jobs:
         with:
           java-version: '21.0.2+13.0.LTS'
           distribution: 'adopt'
+          # settings.xml configuration
+          server-id: 'central'
+          server-username: COLLAB_DEPLOY_USERNAME
+          server-password: COLLAB_DEPLOY_TOKEN
 
       - name: Set changelist version
         run: |
@@ -68,4 +72,5 @@ jobs:
          git config --global user.name "${{ github.actor }}"
          ./mvnw --batch-mode deploy -ntp -s .github/collab-mvn-settings.xml -DskipTests -Dchangelist=${{ env.CHANGELIST_VERSION }}
         env: 
+          COLLAB_DEPLOY_USERNAME: 'dockstore-bot'
           COLLAB_DEPLOY_TOKEN: ${{ secrets.COLLAB_DEPLOY_TOKEN }}
