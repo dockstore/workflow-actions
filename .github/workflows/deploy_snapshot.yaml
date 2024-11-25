@@ -33,7 +33,7 @@ jobs:
           java-version: '21.0.2+13.0.LTS'
           distribution: 'adopt'
           # settings.xml configuration
-          server-id: 'central'
+          server-id: 'snapshots'
           server-username: SNAPSHOT_DEPLOY_USERNAME
           server-password: SNAPSHOT_DEPLOY_TOKEN
 
@@ -47,5 +47,5 @@ jobs:
             ./mvnw --batch-mode deploy -ntp -DskipTests -Dchangelist=$CHANGELIST_VERSION
           fi
         env: 
-          SNAPSHOT_DEPLOY_USERNAME: 'dockstore-bot'
+          SNAPSHOT_DEPLOY_USERNAME: 'dockstore-snapshot-bot'
           SNAPSHOT_DEPLOY_TOKEN: ${{ secrets.SNAPSHOT_DEPLOY_TOKEN }}
