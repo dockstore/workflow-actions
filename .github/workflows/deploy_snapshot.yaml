@@ -32,15 +32,20 @@ jobs:
         with:
           java-version: '21.0.2+13.0.LTS'
           distribution: 'adopt'
+          # settings.xml configuration
+          server-id: 'central'
+          server-username: SNAPSHOT_DEPLOY_USERNAME
+          server-password: SNAPSHOT_DEPLOY_TOKEN
 
       - name: Deploy with mvnw
         run: |
           if [ ${{ github.ref_name }} == develop ]; then
-            ./mvnw --batch-mode deploy -ntp -s .github/snapshot-mvn-settings.xml -DskipTests
+            ./mvnw --batch-mode deploy -ntp -DskipTests
           else
             CHANGELIST_VERSION=.0-${{ github.ref_name }}-SNAPSHOT
             CHANGELIST_VERSION=${CHANGELIST_VERSION//\//_}
-            ./mvnw --batch-mode deploy -ntp -s .github/snapshot-mvn-settings.xml -DskipTests -Dchangelist=$CHANGELIST_VERSION
+            ./mvnw --batch-mode deploy -ntp -DskipTests -Dchangelist=$CHANGELIST_VERSION
           fi
         env: 
+          SNAPSHOT_DEPLOY_USERNAME: 'dockstore-bot'
           SNAPSHOT_DEPLOY_TOKEN: ${{ secrets.SNAPSHOT_DEPLOY_TOKEN }}
