@@ -58,13 +58,15 @@ jobs:
         run: |
           set -x
           if ${{ github.ref_type == 'tag' }}; then
-            # Break up the semantic version tag by the '.' delimiter and return the third field onward. Prefix this with the '.'
-            # Ex: 1.16.0 -> .0 and 1.16.0-alpha.0 -> .0-alpha.0
-            CHANGELIST_VERSION=$(echo ${{ github.ref_name }} | cut -d. -f 3-)
-            if [ -z $CHANGELIST_VERSION ]; then
+            # Check that the tag follows semantic versioning. Note that the regex is not super strict
+            if [[ ${{ github.ref_name }} =~ ^[0-9]+\.[0-9]+\.[0-9a-zA-Z-]+$ ]]; then
+              # Break up the semantic version tag by the '.' delimiter and return the third field onward. Prefix this with the '.'
+              # Ex: 1.16.0 -> .0 and 1.16.0-alpha.0 -> .0-alpha.0
+              CHANGELIST_VERSION=.$(echo ${{ github.ref_name }} | cut -d. -f 3-)
+            else
+              echo "Invalid semantic version for tag ${{ github.ref_name }}"
               exit 1
             fi
-            CHANGELIST_VERSION=.$CHANGELIST
           elif ${{ github.ref_name != 'develop' }}; then
             CHANGELIST_VERSION=.0-${{ github.ref_name }}-SNAPSHOT
             CHANGELIST_VERSION=${CHANGELIST_VERSION//\//-}
