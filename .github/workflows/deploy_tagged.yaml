@@ -48,7 +48,7 @@ jobs:
               exit 1
             fi
             CHANGELIST_VERSION=.$CHANGELIST
-          elif ${{ env.IS_DEVELOP_SNAPSHOT == false }}; then
+          elif ${{ github.ref_name != 'develop' }}; then
             CHANGELIST_VERSION=.0-${{ github.ref_name }}-SNAPSHOT
             CHANGELIST_VERSION=${CHANGELIST_VERSION//\//_}
           fi
@@ -57,6 +57,7 @@ jobs:
 
       - name: Store Maven project version 
         run: |
+          set -x
           if ${{ env.IS_DEVELOP_SNAPSHOT }}; then
             echo "maven_project_version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
           else
@@ -72,7 +73,8 @@ jobs:
           git config --global user.email "${{ github.actor }}"
           git config --global user.name "${{ github.actor }}"
 
-          if [ ${{ env.IS_DEVELOP_SNAPSHOT }} ]; then
+          set -x
+          if ${{ env.IS_DEVELOP_SNAPSHOT }}; then
             ./mvnw --batch-mode deploy -ntp -DskipTests
           else
             ./mvnw --batch-mode deploy -ntp -DskipTests -Dchangelist=${{ env.CHANGELIST_VERSION }}
