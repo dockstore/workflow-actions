@@ -48,7 +48,7 @@ jobs:
               exit 1
             fi
             CHANGELIST_VERSION=.$CHANGELIST
-          elif ${{ !env.IS_DEVELOP_SNAPSHOT }}; then
+          elif ${{ env.IS_DEVELOP_SNAPSHOT == false }}; then
             CHANGELIST_VERSION=.0-${{ github.ref_name }}-SNAPSHOT
             CHANGELIST_VERSION=${CHANGELIST_VERSION//\//_}
           fi
