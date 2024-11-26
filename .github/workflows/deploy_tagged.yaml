@@ -1,22 +1,14 @@
-name: Reusable tagged release deploy
+name: Reusable maven deploy
 
 on:
   workflow_call:
-    inputs:
-      changelist:
-        description: 'patch and pre-release metadata'
-        type: string
+
+env:
+  IS_DEVELOP_SNAPSHOT: ${{ github.ref_type == 'branch' && github.ref_name == 'develop' && true || false }}
 
 jobs:
   build:
     runs-on: ubuntu-22.04
-
-    # Should only release tags
-    # TODO: should only release tags where the required status checks are passing
-    if: github.ref_type == 'tag'
-
-    permissions:
-      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -41,14 +33,13 @@ jobs:
           java-version: '21.0.2+13.0.LTS'
           distribution: 'adopt'
           # settings.xml configuration
-          server-id: 'central'
-          server-username: COLLAB_DEPLOY_USERNAME
-          server-password: COLLAB_DEPLOY_TOKEN
+          server-id: ${{ github.ref_type == 'tag' && 'central' || 'snapshots' }}
+          server-username: DEPLOY_USERNAME
+          server-password: DEPLOY_TOKEN
 
       - name: Set changelist version
         run: |
-          CHANGELIST_VERSION=${{ inputs.changelist }}
-          if [ -z ${CHANGELIST_VERSION} ]; then
+          if [ ${{ github.ref_type }} == 'tag' ]; then
             # Break up the semantic version tag by the '.' delimiter and return the third field onward. Prefix this with the '.'
             # Ex: 1.16.0 -> .0 and 1.16.0-alpha.0 -> .0-alpha.0
             CHANGELIST_VERSION=$(echo ${{ github.ref_name }} | cut -d. -f 3-)
@@ -56,11 +47,20 @@ jobs:
               exit 1
             fi
             CHANGELIST_VERSION=.$CHANGELIST
+          elif [ ${{ !env.IS_DEVELOP_SNAPSHOT }} ]; then
+            CHANGELIST_VERSION=.0-${{ github.ref_name }}-SNAPSHOT
+            CHANGELIST_VERSION=${CHANGELIST_VERSION//\//_}
           fi
+
           echo "CHANGELIST_VERSION=${CHANGELIST_VERSION}" >> $GITHUB_ENV
 
       - name: Store Maven project version 
-        run: echo "maven_project_version=$(mvn help:evaluate -Dexpression=project.version -Dchangelist=${{ env.CHANGELIST_VERSION }} -q -DforceStdout)" >> $GITHUB_ENV
+        run: |
+          if [ ${{ env.IS_DEVELOP_SNAPSHOT }} ]; then
+            echo "maven_project_version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+          else
+            echo "maven_project_version=$(mvn help:evaluate -Dexpression=project.version -Dchangelist=${{ env.CHANGELIST_VERSION }} -q -DforceStdout)" >> $GITHUB_ENV
+          fi
 
       - name: Read exported variable
         run: |
@@ -68,9 +68,14 @@ jobs:
 
       - name: Deploy with mvnw
         run: |
-         git config --global user.email "${{ github.actor }}"
-         git config --global user.name "${{ github.actor }}"
-         ./mvnw --batch-mode deploy -ntp -DskipTests -Dchangelist=${{ env.CHANGELIST_VERSION }}
+          git config --global user.email "${{ github.actor }}"
+          git config --global user.name "${{ github.actor }}"
+
+          if [ ${{ env.IS_DEVELOP_SNAPSHOT }} ]; then
+            ./mvnw --batch-mode deploy -ntp -DskipTests
+          else
+            ./mvnw --batch-mode deploy -ntp -DskipTests -Dchangelist=${{ env.CHANGELIST_VERSION }}
+          fi
         env: 
-          COLLAB_DEPLOY_USERNAME: 'dockstore-bot'
-          COLLAB_DEPLOY_TOKEN: ${{ secrets.COLLAB_DEPLOY_TOKEN }}
+          DEPLOY_USERNAME: ${{ github.ref_type == 'tag' && 'dockstore-bot' || 'dockstore-snapshot-bot' }}
+          DEPLOY_TOKEN: ${{ github.ref_type == 'tag' && secrets.COLLAB_DEPLOY_TOKEN  || secrets.SNAPSHOT_DEPLOY_TOKEN }}
