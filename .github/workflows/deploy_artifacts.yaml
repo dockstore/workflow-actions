@@ -48,7 +48,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '21.0.2+13.0.LTS'
-          distribution: 'adopt'
+          distribution: 'temurin'
           # settings.xml configuration
           server-id: ${{ github.ref_type == 'tag' && 'central' || 'snapshots' }}
           server-username: DEPLOY_USERNAME
