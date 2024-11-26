@@ -1,13 +1,30 @@
-name: Reusable maven deploy
+# Deploys artifacts to maven and optionally deploys an image to quay
+name: Reusable artifacts deploy
 
 on:
   workflow_call:
+    inputs: 
+      createDockerImage:
+        description: 'Whether to create a Docker image, caller must have Dockerfile in the repository'
+        required: false
+        type: boolean
+        default: false
+      quayRepository:
+        description: The quay repository to upload the image to. The repository must belong to the dockstore quay organization.
+        required: false
+        type: string
+      dockerContext:
+        description: The Docker context containing the Dockerfile of the image to build and push.
+        required: false
+        default: .
+        type: string
 
 env:
   IS_DEVELOP_SNAPSHOT: ${{ github.ref_type == 'branch' && github.ref_name == 'develop' }}
 
 jobs:
-  build:
+  deploy_maven:
+    name: Maven Deploy
     runs-on: ubuntu-22.04
 
     steps:
@@ -82,3 +99,12 @@ jobs:
         env: 
           DEPLOY_USERNAME: ${{ github.ref_type == 'tag' && 'dockstore-bot' || 'dockstore-snapshot-bot' }}
           DEPLOY_TOKEN: ${{ github.ref_type == 'tag' && secrets.COLLAB_DEPLOY_TOKEN  || secrets.SNAPSHOT_DEPLOY_TOKEN }}
+
+  deploy_image:
+    if: ${{ inputs.createDockerImage && inputs.quayRepository != '' }}
+    name: Image Deploy
+    uses: dockstore/workflow-actions/.github/workflows/deploy_image.yaml@seab-6771/reusable-image-deploy
+    with:
+      quayRepository: dockstore-webservice
+      dockerContext: ${{ inputs.dockerContext }}
+    secrets: inherit
