@@ -102,7 +102,6 @@ jobs:
 
   deploy_image:
     if: ${{ inputs.createDockerImage && inputs.quayRepository != '' }}
-    name: Image Deploy
     uses: dockstore/workflow-actions/.github/workflows/deploy_image.yaml@seab-6771/reusable-image-deploy
     with:
       quayRepository: ${{ inputs.quayRepository }}

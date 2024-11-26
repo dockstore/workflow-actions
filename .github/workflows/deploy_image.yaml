@@ -21,7 +21,8 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  deploy_image:
+    name: Deploy Image to Quay
     runs-on: ubuntu-22.04
 
     steps:
