@@ -67,7 +67,7 @@ jobs:
             CHANGELIST_VERSION=.$CHANGELIST
           elif ${{ github.ref_name != 'develop' }}; then
             CHANGELIST_VERSION=.0-${{ github.ref_name }}-SNAPSHOT
-            CHANGELIST_VERSION=${CHANGELIST_VERSION//\//_}
+            CHANGELIST_VERSION=${CHANGELIST_VERSION//\//-}
           fi
 
           echo "CHANGELIST_VERSION=${CHANGELIST_VERSION}" >> $GITHUB_ENV
