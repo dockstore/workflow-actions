@@ -105,6 +105,6 @@ jobs:
     name: Image Deploy
     uses: dockstore/workflow-actions/.github/workflows/deploy_image.yaml@seab-6771/reusable-image-deploy
     with:
-      quayRepository: dockstore-webservice
+      quayRepository: ${{ inputs.quayRepository }}
       dockerContext: ${{ inputs.dockerContext }}
     secrets: inherit
