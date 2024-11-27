@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   deploy_image:
-    name: Deploy Image to ${{ env.DOCKER_IMAGE_NAME }}
+    name: Deploy image to quay.io/dockstore/${{ inputs.quayRepository }}
     runs-on: ubuntu-22.04
 
     steps:
