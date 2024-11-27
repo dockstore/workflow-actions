@@ -107,7 +107,7 @@ jobs:
           DEPLOY_TOKEN: ${{ github.ref_type == 'tag' && secrets.COLLAB_DEPLOY_TOKEN  || secrets.SNAPSHOT_DEPLOY_TOKEN }}
 
       - if: ${{ inputs.createDockerImage && inputs.quayRepository != '' && inputs.imageArtifactsPath != '' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ inputs.quayRepository }}-artifacts
           path: ${{ inputs.imageArtifactsPath }}
