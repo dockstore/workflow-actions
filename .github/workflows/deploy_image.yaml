@@ -12,10 +12,6 @@ on:
         required: false
         default: .
         type: string
-      imageArtifactsName:
-        description: The name of the uploaded artifacts that are required to build the Docker image
-        required: false
-        type: string
 
 env:
   DOCKER_IMAGE_NAME: quay.io/dockstore/${{ inputs.quayRepository }}
@@ -32,6 +28,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Step that does that actual cache save and restore
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+           ${{ runner.os }}-maven-
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21.0.2+13.0.LTS'
+          distribution: 'temurin'
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -46,11 +56,8 @@ jobs:
           username: ${{ secrets.QUAY_USER }}
           password: ${{ secrets.QUAY_TOKEN }}
 
-      - if: ${{ inputs.imageArtifactsName != '' }}
-        name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ inputs.imageArtifactsName }}
+      - name: Build
+        run: ./mvnw -B clean install -DskipTests
 
       - name: Set folder name
         run: |
