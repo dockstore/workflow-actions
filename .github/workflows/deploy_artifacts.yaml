@@ -109,7 +109,7 @@ jobs:
       - if: ${{ inputs.createDockerImage && inputs.quayRepository != '' && inputs.imageArtifactsPath != '' }}
         uses: actions/upload-artifact@v4
         with:
-          name: image-artifacts
+          name: ${{ inputs.quayRepository }}-artifacts
           path: ${{ inputs.imageArtifactsPath }}
 
   deploy_image:
@@ -119,5 +119,5 @@ jobs:
     with:
       quayRepository: ${{ inputs.quayRepository }}
       dockerContext: ${{ inputs.dockerContext }}
-      imageArtifactsPath: ${{ inputs.imageArtifactsPath }}
+      imageArtifactsName: ${{ inputs.quayRepository }}-artifacts
     secrets: inherit

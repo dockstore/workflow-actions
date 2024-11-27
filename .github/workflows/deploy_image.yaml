@@ -12,8 +12,8 @@ on:
         required: false
         default: .
         type: string
-      imageArtifactsPath:
-        description: The path to uploaded artifacts that are required to build the Docker image
+      imageArtifactsName:
+        description: The name of the uploaded artifacts that are required to build the Docker image
         required: false
         type: string
 
@@ -46,12 +46,11 @@ jobs:
           username: ${{ secrets.QUAY_USER }}
           password: ${{ secrets.QUAY_TOKEN }}
 
-      - if: ${{ inputs.imageArtifactsPath != '' }}
+      - if: ${{ inputs.imageArtifactsName != '' }}
         name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: image-artifacts
-          path: ${{ inputs.imageArtifactsPath }}
+          name: ${{ inputs.imageArtifactsName }}
 
       - name: Set folder name
         run: |
