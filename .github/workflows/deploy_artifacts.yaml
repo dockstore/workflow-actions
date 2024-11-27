@@ -1,4 +1,4 @@
-# Deploys artifacts to maven and optionally deploys an image to quay
+# Deploys artifacts using maven and optionally deploys an image to quay
 name: Reusable artifacts deploy
 
 on:
@@ -24,7 +24,7 @@ env:
 
 jobs:
   deploy_maven:
-    name: Maven Deploy
+    name: Maven deploy ${{ github.ref_type }}
     runs-on: ubuntu-22.04
 
     steps:

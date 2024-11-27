@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   deploy_image:
-    name: Deploy Image to Quay
+    name: Deploy Image to ${{ env.DOCKER_IMAGE_NAME }}
     runs-on: ubuntu-22.04
 
     steps:
