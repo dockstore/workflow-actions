@@ -24,7 +24,7 @@ env:
 
 jobs:
   deploy_maven:
-    name: Maven deploy ${{ github.ref_type }}
+    name: Maven deploy ${{ github.ref_type == 'tag' && 'tagged' || 'snapshot' }} release
     runs-on: ubuntu-22.04
 
     steps:
@@ -48,7 +48,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '21.0.2+13.0.LTS'
-          distribution: 'temurin'
+          distribution: 'adopt'
           # settings.xml configuration
           server-id: ${{ github.ref_type == 'tag' && 'central' || 'snapshots' }}
           server-username: DEPLOY_USERNAME

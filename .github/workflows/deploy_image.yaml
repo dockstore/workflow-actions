@@ -40,7 +40,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '21.0.2+13.0.LTS'
-          distribution: 'temurin'
+          distribution: 'adopt'
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
