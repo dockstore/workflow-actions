@@ -1,0 +1,120 @@
+# Deploys artifacts using maven and optionally deploys an image to quay
+name: Reusable artifacts deploy
+
+on:
+  workflow_call:
+    inputs: 
+      createDockerImage:
+        description: 'Whether to create a Docker image, caller must have Dockerfile in the repository'
+        required: false
+        type: boolean
+        default: false
+      quayRepository:
+        description: The quay repository to upload the image to. The repository must belong to the dockstore quay organization.
+        required: false
+        type: string
+      dockerContext:
+        description: The Docker context containing the Dockerfile of the image to build and push.
+        required: false
+        default: .
+        type: string
+
+env:
+  IS_DEVELOP_SNAPSHOT: ${{ github.ref_type == 'branch' && github.ref_name == 'develop' }}
+
+jobs:
+  check_tag:
+    runs-on: ubuntu-22.04
+    
+    steps:
+      - name: Check valid semantic tag
+        if: ${{ github.ref_type == 'tag' }}
+        run: |
+          # Check that the tag follows semantic versioning. Note that the regex is not super strict
+          if [[ ! ${{ github.ref_name }} =~ ^[0-9]+\.[0-9]+\.[0-9a-zA-Z-]+(-[0-9a-zA-Z-]+\.[0-9a-zA-Z-]+)*$ ]]; then
+            echo "Invalid semantic version for tag ${{ github.ref_name }}"
+            exit 1
+          fi
+
+  deploy_maven:
+    needs: check_tag
+    name: Maven deploy ${{ github.ref_type == 'tag' && 'tagged' || 'snapshot' }} release
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+      # Step that does that actual cache save and restore
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+           ${{ runner.os }}-maven-
+
+      - name: install git secrets
+        run: |
+          wget --no-verbose -O git-secrets-1.3.0.tar.gz https://github.com/awslabs/git-secrets/archive/1.3.0.tar.gz
+          tar -zxf git-secrets-1.3.0.tar.gz
+          cd git-secrets-1.3.0
+          sudo make install   
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21.0.2+13.0.LTS'
+          distribution: 'adopt'
+          # settings.xml configuration
+          server-id: ${{ github.ref_type == 'tag' && 'central' || 'snapshots' }}
+          server-username: DEPLOY_USERNAME
+          server-password: DEPLOY_TOKEN
+
+      - name: Set changelist version
+        run: |
+          set -x
+          if ${{ github.ref_type == 'tag' }}; then
+            # Break up the semantic version tag by the '.' delimiter and return the third field onward. Prefix this with the '.'
+            # Ex: 1.16.0 -> .0 and 1.16.0-alpha.0 -> .0-alpha.0
+            CHANGELIST_VERSION=.$(echo ${{ github.ref_name }} | cut -d. -f 3-)
+          elif ${{ github.ref_name != 'develop' }}; then
+            CHANGELIST_VERSION=.0-${{ github.ref_name }}-SNAPSHOT
+            CHANGELIST_VERSION=${CHANGELIST_VERSION//\//-}
+          fi
+
+          echo "CHANGELIST_VERSION=${CHANGELIST_VERSION}" >> $GITHUB_ENV
+
+      - name: Store Maven project version 
+        run: |
+          set -x
+          if ${{ env.IS_DEVELOP_SNAPSHOT }}; then
+            echo "maven_project_version=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+          else
+            echo "maven_project_version=$(./mvnw help:evaluate -Dexpression=project.version -Dchangelist=${{ env.CHANGELIST_VERSION }} -q -DforceStdout)" >> $GITHUB_ENV
+          fi
+
+      - name: Read exported variable
+        run: |
+          echo "${{ env.maven_project_version }}"
+
+      - name: Deploy with mvnw
+        run: |
+          git config --global user.email "${{ github.actor }}"
+          git config --global user.name "${{ github.actor }}"
+
+          set -x
+          if ${{ env.IS_DEVELOP_SNAPSHOT }}; then
+            ./mvnw --batch-mode deploy -ntp -DskipTests
+          else
+            ./mvnw --batch-mode deploy -ntp -DskipTests -Dchangelist=${{ env.CHANGELIST_VERSION }}
+          fi
+        env: 
+          DEPLOY_USERNAME: ${{ github.ref_type == 'tag' && 'dockstore-bot' || 'dockstore-snapshot-bot' }}
+          DEPLOY_TOKEN: ${{ github.ref_type == 'tag' && secrets.COLLAB_DEPLOY_TOKEN  || secrets.SNAPSHOT_DEPLOY_TOKEN }}
+
+  deploy_image:
+    needs: check_tag
+    if: ${{ inputs.createDockerImage && inputs.quayRepository != '' }}
+    uses: dockstore/workflow-actions/.github/workflows/deploy_image.yaml@seab-6771/reusable-image-deploy
+    with:
+      quayRepository: ${{ inputs.quayRepository }}
+      dockerContext: ${{ inputs.dockerContext }}
+    secrets: inherit
