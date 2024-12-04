@@ -23,7 +23,21 @@ env:
   IS_DEVELOP_SNAPSHOT: ${{ github.ref_type == 'branch' && github.ref_name == 'develop' }}
 
 jobs:
+  check_tag:
+    if: ${{ github.ref_type == 'tag' }}
+    runs-on: ubuntu-22.04
+    
+    steps:
+      - name: Check valid semantic tag
+        run: |
+          # Check that the tag follows semantic versioning. Note that the regex is not super strict
+          if [[ ! ${{ github.ref_name }} =~ ^[0-9]+\.[0-9]+\.[0-9a-zA-Z-]+(-[0-9a-zA-Z-]+\.[0-9a-zA-Z-]+)*$ ]]; then
+            echo "Invalid semantic version for tag ${{ github.ref_name }}"
+            exit 1
+          fi
+
   deploy_maven:
+    needs: check_tag
     name: Maven deploy ${{ github.ref_type == 'tag' && 'tagged' || 'snapshot' }} release
     runs-on: ubuntu-22.04
 
@@ -58,15 +72,9 @@ jobs:
         run: |
           set -x
           if ${{ github.ref_type == 'tag' }}; then
-            # Check that the tag follows semantic versioning. Note that the regex is not super strict
-            if [[ ${{ github.ref_name }} =~ ^[0-9]+\.[0-9]+\.[0-9a-zA-Z-]+(-[0-9a-zA-Z-]+\.[0-9a-zA-Z-]+)*$ ]]; then
-              # Break up the semantic version tag by the '.' delimiter and return the third field onward. Prefix this with the '.'
-              # Ex: 1.16.0 -> .0 and 1.16.0-alpha.0 -> .0-alpha.0
-              CHANGELIST_VERSION=.$(echo ${{ github.ref_name }} | cut -d. -f 3-)
-            else
-              echo "Invalid semantic version for tag ${{ github.ref_name }}"
-              exit 1
-            fi
+            # Break up the semantic version tag by the '.' delimiter and return the third field onward. Prefix this with the '.'
+            # Ex: 1.16.0 -> .0 and 1.16.0-alpha.0 -> .0-alpha.0
+            CHANGELIST_VERSION=.$(echo ${{ github.ref_name }} | cut -d. -f 3-)
           elif ${{ github.ref_name != 'develop' }}; then
             CHANGELIST_VERSION=.0-${{ github.ref_name }}-SNAPSHOT
             CHANGELIST_VERSION=${CHANGELIST_VERSION//\//-}
@@ -103,6 +111,7 @@ jobs:
           DEPLOY_TOKEN: ${{ github.ref_type == 'tag' && secrets.COLLAB_DEPLOY_TOKEN  || secrets.SNAPSHOT_DEPLOY_TOKEN }}
 
   deploy_image:
+    needs: check_tag
     if: ${{ inputs.createDockerImage && inputs.quayRepository != '' }}
     uses: dockstore/workflow-actions/.github/workflows/deploy_image.yaml@seab-6771/reusable-image-deploy
     with:
