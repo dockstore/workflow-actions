@@ -78,9 +78,9 @@ jobs:
         run: |
           set -x
           if ${{ env.IS_DEVELOP_SNAPSHOT }}; then
-            echo "maven_project_version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+            echo "maven_project_version=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
           else
-            echo "maven_project_version=$(mvn help:evaluate -Dexpression=project.version -Dchangelist=${{ env.CHANGELIST_VERSION }} -q -DforceStdout)" >> $GITHUB_ENV
+            echo "maven_project_version=$(./mvnw help:evaluate -Dexpression=project.version -Dchangelist=${{ env.CHANGELIST_VERSION }} -q -DforceStdout)" >> $GITHUB_ENV
           fi
 
       - name: Read exported variable
