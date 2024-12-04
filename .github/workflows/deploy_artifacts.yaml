@@ -113,7 +113,7 @@ jobs:
   deploy_image:
     needs: check_tag
     if: ${{ inputs.createDockerImage && inputs.quayRepository != '' }}
-    uses: dockstore/workflow-actions/.github/workflows/deploy_image.yaml@seab-6771/reusable-image-deploy
+    uses: dockstore/workflow-actions/.github/workflows/deploy_image.yaml@main
     with:
       quayRepository: ${{ inputs.quayRepository }}
       dockerContext: ${{ inputs.dockerContext }}
