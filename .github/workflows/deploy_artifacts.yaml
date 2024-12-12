@@ -23,8 +23,10 @@ env:
   IS_DEVELOP_SNAPSHOT: ${{ github.ref_type == 'branch' && github.ref_name == 'develop' }}
 
 jobs:
-  check_tag:
+  set_changelist:
     runs-on: ubuntu-22.04
+    outputs:
+      changelist: ${{ steps.set_changelist.outputs.changelist }}
     
     steps:
       - name: Check valid semantic tag
@@ -36,10 +38,28 @@ jobs:
             exit 1
           fi
 
+      - name: Set changelist version
+        id: set_changelist
+        run: |
+          set -x
+          if ${{ github.ref_type == 'tag' }}; then
+            # Break up the semantic version tag by the '.' delimiter and return the third field onward. Prefix this with the '.'
+            # Ex: 1.16.0 -> .0 and 1.16.0-alpha.0 -> .0-alpha.0
+            CHANGELIST_VERSION=.$(echo ${{ github.ref_name }} | cut -d. -f 3-)
+          elif ${{ github.ref_name != 'develop' }}; then
+            CHANGELIST_VERSION=.0-${{ github.ref_name }}-SNAPSHOT
+            CHANGELIST_VERSION=${CHANGELIST_VERSION//\//-}
+          fi
+
+          echo "changelist=${CHANGELIST_VERSION}" >> "$GITHUB_OUTPUT"      
+
   deploy_maven:
-    needs: check_tag
+    needs: set_changelist
     name: Maven deploy ${{ github.ref_type == 'tag' && 'tagged' || 'snapshot' }} release
     runs-on: ubuntu-22.04
+
+    env:
+      CHANGELIST_VERSION: ${{ needs.set_changelist.outputs.changelist }}
 
     steps:
       - uses: actions/checkout@v4
@@ -67,20 +87,6 @@ jobs:
           server-id: ${{ github.ref_type == 'tag' && 'central' || 'snapshots' }}
           server-username: DEPLOY_USERNAME
           server-password: DEPLOY_TOKEN
-
-      - name: Set changelist version
-        run: |
-          set -x
-          if ${{ github.ref_type == 'tag' }}; then
-            # Break up the semantic version tag by the '.' delimiter and return the third field onward. Prefix this with the '.'
-            # Ex: 1.16.0 -> .0 and 1.16.0-alpha.0 -> .0-alpha.0
-            CHANGELIST_VERSION=.$(echo ${{ github.ref_name }} | cut -d. -f 3-)
-          elif ${{ github.ref_name != 'develop' }}; then
-            CHANGELIST_VERSION=.0-${{ github.ref_name }}-SNAPSHOT
-            CHANGELIST_VERSION=${CHANGELIST_VERSION//\//-}
-          fi
-
-          echo "CHANGELIST_VERSION=${CHANGELIST_VERSION}" >> $GITHUB_ENV
 
       - name: Store Maven project version 
         run: |
@@ -111,10 +117,11 @@ jobs:
           DEPLOY_TOKEN: ${{ github.ref_type == 'tag' && secrets.COLLAB_DEPLOY_TOKEN  || secrets.SNAPSHOT_DEPLOY_TOKEN }}
 
   deploy_image:
-    needs: check_tag
+    needs: set_changelist
     if: ${{ inputs.createDockerImage && inputs.quayRepository != '' }}
     uses: dockstore/workflow-actions/.github/workflows/deploy_image.yaml@main
     with:
       quayRepository: ${{ inputs.quayRepository }}
       dockerContext: ${{ inputs.dockerContext }}
+      changelist: ${{ needs.set_changelist.outputs.changelist }}
     secrets: inherit
