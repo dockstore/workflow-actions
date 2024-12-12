@@ -51,7 +51,7 @@ jobs:
             CHANGELIST_VERSION=${CHANGELIST_VERSION//\//-}
           fi
 
-          echo "changelist=${CHANGELIST_VERSION}" >> "$GITHUB_OUTPUT"      
+          echo "changelist=${DOESNT_EXIST}" >> "$GITHUB_OUTPUT"      
 
   deploy_maven:
     needs: set_changelist
