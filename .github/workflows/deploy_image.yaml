@@ -12,6 +12,10 @@ on:
         required: false
         default: .
         type: string
+      changelist:
+        description: 'Patch and pre-release metadata. Example: ".0-alpha.1"'
+        required: false
+        type: string
 
 env:
   DOCKER_IMAGE_NAME: quay.io/dockstore/${{ inputs.quayRepository }}
@@ -56,8 +60,14 @@ jobs:
           username: ${{ secrets.QUAY_USER }}
           password: ${{ secrets.QUAY_TOKEN }}
 
-      - name: Build
+      - name: Build without changelist
+        if: ${{ inputs.changelist == '' }}
         run: ./mvnw -B clean install -DskipTests
+
+      - name: Build with changelist
+        if: ${{ inputs.changelist != '' }}
+        run: |
+          ./mvnw -B clean install -DskipTests -Dchangelist=${{ inputs.changelist }}
 
       - name: Set folder name
         run: |
