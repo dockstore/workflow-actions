@@ -119,7 +119,7 @@ jobs:
   deploy_image:
     needs: set_changelist
     if: ${{ inputs.createDockerImage && inputs.quayRepository != '' }}
-    uses: dockstore/workflow-actions/.github/workflows/deploy_image.yaml@main
+    uses: dockstore/workflow-actions/.github/workflows/deploy_image.yaml@seab-6860/image-changelist
     with:
       quayRepository: ${{ inputs.quayRepository }}
       dockerContext: ${{ inputs.dockerContext }}
