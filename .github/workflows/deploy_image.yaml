@@ -12,6 +12,10 @@ on:
         required: false
         default: .
         type: string
+      buildArgs:
+        description: Build arguments used to build the Docker image
+        required: false
+        type: string
       changelist:
         description: 'Patch and pre-release metadata. Example: ".0-alpha.1"'
         required: false
@@ -81,6 +85,8 @@ jobs:
           context: ${{ inputs.dockerContext }}
           push: true
           tags: '${{ env.DOCKER_IMAGE_NAME }}:${{ env.S3_FOLDER }}'
+          build-args: |
+            ${{ inputs.buildArgs }}
 
       - name: Create checksums
         run: |
