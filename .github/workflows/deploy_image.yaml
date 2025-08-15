@@ -66,12 +66,16 @@ jobs:
 
       - name: Build without changelist
         if: ${{ inputs.changelist == '' }}
-        run: ./mvnw -B clean install -DskipTests
+        run: ./mvnw -B clean install -DskipTests -s .github/collab-mvn-settings.xml
+        env:
+          COLLAB_DEPLOY_TOKEN: ${{ secrets.COLLAB_DEPLOY_TOKEN }}
 
       - name: Build with changelist
         if: ${{ inputs.changelist != '' }}
         run: |
-          ./mvnw -B clean install -DskipTests -Dchangelist=${{ inputs.changelist }}
+          ./mvnw -B clean install -DskipTests -Dchangelist=${{ inputs.changelist }} -s .github/collab-mvn-settings.xml
+        env:
+          COLLAB_DEPLOY_TOKEN: ${{ secrets.COLLAB_DEPLOY_TOKEN }}
 
       - name: Set folder name
         run: |
@@ -87,6 +91,8 @@ jobs:
           tags: '${{ env.DOCKER_IMAGE_NAME }}:${{ env.S3_FOLDER }}'
           build-args: |
             ${{ inputs.buildArgs }}
+        env:
+          COLLAB_DEPLOY_TOKEN: ${{ secrets.COLLAB_DEPLOY_TOKEN }}
 
       - name: Create checksums
         run: |
