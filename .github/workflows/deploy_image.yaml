@@ -91,6 +91,7 @@ jobs:
           tags: '${{ env.DOCKER_IMAGE_NAME }}:${{ env.S3_FOLDER }}'
           build-args: |
             ${{ inputs.buildArgs }}
+            --secret id=COLLAB_DEPLOY_TOKEN
         env:
           COLLAB_DEPLOY_TOKEN: ${{ secrets.COLLAB_DEPLOY_TOKEN }}
 
