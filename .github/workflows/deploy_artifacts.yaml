@@ -24,7 +24,7 @@ env:
 
 jobs:
   set_changelist:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       changelist: ${{ steps.set_changelist.outputs.changelist }}
     
@@ -56,15 +56,15 @@ jobs:
   deploy_maven:
     needs: set_changelist
     name: Maven deploy ${{ github.ref_type == 'tag' && 'tagged' || 'snapshot' }} release
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     env:
       CHANGELIST_VERSION: ${{ needs.set_changelist.outputs.changelist }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Step that does that actual cache save and restore
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -79,10 +79,10 @@ jobs:
           sudo make install   
 
       - name: Set up JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
-          java-version: '21.0.2+13.0.LTS'
-          distribution: 'adopt'
+          java-version: '21.0.10+7.0.LTS'
+          distribution: 'temurin'
           # settings.xml configuration
           server-id: ${{ github.ref_type == 'tag' && 'central' || 'snapshots' }}
           server-username: DEPLOY_USERNAME
