@@ -24,7 +24,7 @@ env:
 
 jobs:
   set_changelist:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       changelist: ${{ steps.set_changelist.outputs.changelist }}
     
@@ -56,7 +56,7 @@ jobs:
   deploy_maven:
     needs: set_changelist
     name: Maven deploy ${{ github.ref_type == 'tag' && 'tagged' || 'snapshot' }} release
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     env:
       CHANGELIST_VERSION: ${{ needs.set_changelist.outputs.changelist }}
@@ -80,6 +80,7 @@ jobs:
 
       - name: Set up JDK
         uses: actions/setup-java@v6
+
         with:
           java-version: '21.0.10+7.0.LTS'
           distribution: 'temurin'
