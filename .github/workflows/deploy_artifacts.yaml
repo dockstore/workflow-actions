@@ -79,14 +79,15 @@ jobs:
           sudo make install   
 
       - name: Set up JDK
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
+
         with:
           java-version: '21.0.10+7.0.LTS'
           distribution: 'temurin'
           # settings.xml configuration
           server-id: ${{ github.ref_type == 'tag' && 'central' || 'snapshots' }}
-          server-username: DEPLOY_USERNAME
-          server-password: DEPLOY_TOKEN
+          server-username-env-var: DEPLOY_USERNAME
+          server-password-env-var: DEPLOY_TOKEN
 
       - name: Store Maven project version 
         run: |
